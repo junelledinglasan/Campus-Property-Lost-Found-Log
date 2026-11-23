@@ -12,6 +12,24 @@ npm run dev
 ```
 Buksan ang http://localhost:5173
 
+## PWA (installable web app)
+Web app ito na pwedeng i-install sa browser (laptop man o phone) at gumagana kahit offline.
+
+Hindi tumatakbo ang PWA features sa `npm run dev`. Subukan sa production build:
+```bash
+npm run build
+npm run preview
+```
+Buksan ang http://localhost:4173. Sa Chrome o Edge, lalabas ang **Install app** button sa header (o ang install icon sa address bar).
+
+Kapag i-host na ito online, kailangan ng **HTTPS** para gumana ang install at offline. Localhost lang ang exempted.
+
+Mga file ng PWA: `public/manifest.webmanifest`, `public/sw.js`, at `public/icons/`.
+Ang `/api` (Django) ay hindi kailanman kine-cache ng service worker, kaya laging bago ang data.
+
+## Logo
+Ang seal ng OSAS ay nasa `public/logo.png` (transparent). Ginagamit ito sa header, hero, login page, at sa mga PWA icon sa `public/icons/`.
+
 ## Demo account (OSAS staff)
 - Username: `osas`
 - Password: `osas123`

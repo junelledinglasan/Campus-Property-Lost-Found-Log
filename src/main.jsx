@@ -14,3 +14,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </React.StrictMode>,
 );
+
+// PWA: i-register ang service worker (production build lang, at kailangan ng localhost o HTTPS).
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      /* hindi kritikal: tatakbo pa rin ang app kahit walang offline support */
+    });
+  });
+}

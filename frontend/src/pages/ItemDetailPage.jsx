@@ -91,9 +91,17 @@ function ClaimPanel({ item, onClaimed }) {
 
   if (item.status === 'Claimed') {
     return (
-      <div className="panel">
-        <h2>Already returned</h2>
-        <p>This item was returned to its owner.</p>
+      <div className="panel proof">
+        <h2>Already returned to its owner</h2>
+        {item.returnedAt && <p className="muted">Handed over on {fmtDate(item.returnedAt)}.</p>}
+        {item.handoverPhoto ? (
+          <figure className="proof-figure">
+            <img src={item.handoverPhoto} alt={`Photo taken by OSAS when ${item.name} was handed over`} />
+            <figcaption>Photo taken by OSAS at handover</figcaption>
+          </figure>
+        ) : (
+          <p className="muted">No handover photo is on file for this item.</p>
+        )}
       </div>
     );
   }

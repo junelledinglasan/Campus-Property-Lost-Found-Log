@@ -101,9 +101,12 @@ export async function listItems() {
 
 export async function getItem(id) {
   await sleep();
-  const item = load().items.find((i) => i.id === Number(id));
+  const db = load();
+  const item = db.items.find((i) => i.id === Number(id));
   if (!item) throw new Error('This item does not exist or was removed.');
-  return item;
+  // Proof na naibalik na: ang handover photo ng inaprubahang claim, walang pangalan.
+  const claim = item.status === 'Claimed' ? db.claims.find((c) => c.itemId === item.id && c.status === 'Approved') : null;
+  return { ...item, handoverPhoto: claim ? claim.handoverPhoto : null, returnedAt: claim ? claim.decidedAt : null };
 }
 
 function cleanItemInput(data) {

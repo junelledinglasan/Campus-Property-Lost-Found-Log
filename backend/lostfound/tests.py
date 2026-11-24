@@ -274,3 +274,49 @@ class ClaimFlowTests(ApiTestCase):
         claim = Claim.objects.get(pk=cid)
         self.assertNotIn(TMP_MEDIA, claim.handover_photo.path)
         self.assertIn(TMP_PRIVATE, claim.handover_photo.path)
+
+
+class ReturnProofTests(ApiTestCase):
+    """Makikita ng lahat ng estudyante ang handover photo ng naibalik na item bilang proof."""
+
+    def decide(self, cid):
+        return self.client.post(
+            f'/api/claims/{cid}/decide/',
+            {'decision': 'Approved', 'verifiedName': 'Juan Dela Cruz', 'verifiedStudentNo': '2022-00123',
+             'handoverPhoto': data_url('PNG')},
+            format='json',
+        )
+
+    def test_claimed_item_shows_proof_photo_to_everyone(self):
+        cid = self.claim().data['id']
+        self.sign_in()
+        self.assertEqual(self.decide(cid).status_code, 200)
+        self.client.credentials()  # estudyanteng walang account
+        r = self.client.get(f'/api/items/{self.item.id}/')
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.data['handoverPhoto'].startswith('data:image/'))
+        self.assertTrue(r.data['returnedAt'])
+        # walang pangalan o student number ng kumuha sa public na sagot
+        self.assertNotIn('Juan', str(r.data))
+        self.assertNotIn('2022-00123', str(r.data))
+
+    def test_proof_photo_is_not_in_the_public_list(self):
+        cid = self.claim().data['id']
+        self.sign_in()
+        self.decide(cid)
+        self.client.credentials()
+        rows = self.client.get('/api/items/').data
+        rows = rows['results'] if isinstance(rows, dict) else rows
+        self.assertNotIn('handoverPhoto', rows[0])
+
+    def test_unclaimed_and_pending_items_have_no_proof(self):
+        self.assertIsNone(self.client.get(f'/api/items/{self.item.id}/').data['handoverPhoto'])
+        self.claim()
+        self.assertIsNone(self.client.get(f'/api/items/{self.item.id}/').data['handoverPhoto'])
+
+    def test_rejected_claim_photo_is_never_shown(self):
+        cid = self.claim().data['id']
+        self.sign_in()
+        self.client.post(f'/api/claims/{cid}/decide/', {'decision': 'Rejected', 'verifiedName': 'X Y', 'verifiedStudentNo': '1234'}, format='json')
+        self.client.credentials()
+        self.assertIsNone(self.client.get(f'/api/items/{self.item.id}/').data['handoverPhoto'])

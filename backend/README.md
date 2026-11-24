@@ -35,12 +35,13 @@ Tumatakbo ito sa http://127.0.0.1:8000. Ang `seed_demo` ay gumagawa ng:
 
 Tapos, sa ibang terminal, patakbuhin ang frontend (tingnan ang README ng frontend).
 
-Ang Django admin ay nasa http://127.0.0.1:8000/admin/. Doon pwedeng gumawa ng iba pang OSAS staff account: mag-add ng user at lagyan ng tsek ang **Staff status**. Pwede ring `python manage.py createsuperuser`.
+Ang Django admin ay nasa http://127.0.0.1:8000/django-admin/. Doon pwedeng gumawa ng iba pang OSAS staff account: mag-add ng user at lagyan ng tsek ang **Staff status**. Pwede ring `python manage.py createsuperuser`.
 
 ## Mga patakaran ng sistema
 Unclaimed → (may nag-claim) → **Pending** → (inaprubahan) → **Claimed**
 Kapag ni-reject ang claim, babalik sa **Unclaimed**.
 
+- Kapag Claimed na ang item, makikita ng lahat sa detalye nito ang handover photo bilang proof na naibalik na (walang pangalan o student number).
 - Isang Pending claim lang kada item. Ipinapatupad ito mismo ng database, kaya hindi nalulusutan kahit sabay na nag-claim ang dalawa.
 - Ang estudyante ay hindi nangangailangan ng account. Full name at student number lang ang isinusumite.
 - Para ma-approve, kailangan ang pangalan at student number na nakita ng OSAS sa ID, at ang handover photo.
@@ -64,7 +65,7 @@ Lahat ng error ay may ganitong hugis: `{"detail": "isang malinaw na mensahe"}`.
 
 ## Seguridad
 - Ang listahan ng claims (pangalan at student number) at ang handover photos ay para sa OSAS staff lang.
-- Ang handover photos ay nasa `private_media/`, hindi sa `media/`, kaya walang public na URL. Ipinapadala lang ito ng API sa naka-sign in na staff.
+- Ang handover photos ay nasa `private_media/` (o sa private na bucket ng Supabase), kaya walang public na URL. Ang `GET /api/claims/` (kasama ang pangalan at student number) ay para sa staff lang. Ang larawan lang ang ipinapakita sa publiko, sa `GET /api/items/:id/` ng Claimed na item.
 - Limitado ang pagsusumite ng claim (30 kada oras kada IP) at ang login (10 kada minuto kada IP). Mababago sa `THROTTLE_CLAIMS` at `THROTTLE_LOGIN`.
 - Sinusuri kung totoong larawan ang ina-upload (JPG, PNG, o WebP, hanggang 5 MB).
 
@@ -72,14 +73,23 @@ Lahat ng error ay may ganitong hugis: `{"detail": "isang malinaw na mensahe"}`.
 ```bash
 python manage.py test lostfound
 ```
-25 tests: login, mga pahintulot, buong daloy ng claim, validation, throttle, at privacy ng mga larawan.
+29 tests: login, mga pahintulot, buong daloy ng claim, validation, throttle, privacy ng mga larawan, at proof photo ng naibalik na item.
+
+## Database at larawan
+- Walang `DATABASE_URL`: SQLite (`db.sqlite3`) at mga folder na `media/` at `private_media/`.
+- May `DATABASE_URL` (hal. Supabase Postgres): iyon ang gagamitin.
+- May `SUPABASE_S3_ACCESS_KEY` at kasama: sa Supabase Storage na ise-save ang mga larawan (`lf-items` public, `lf-handover` private).
+- Tingnan ang `.env.example` at ang `DEPLOY.md` sa ugat ng project.
+
+Para gumawa ng OSAS account nang walang shell: i-set ang `OSAS_USERNAME` at `OSAS_PASSWORD` at patakbuhin ang `python manage.py ensure_admin`. Ligtas ito patakbuhin nang paulit-ulit.
 
 ## Bago i-deploy (production)
-1. I-set ang environment variables (tingnan ang `.env.example`): `DJANGO_DEBUG=0`, mahabang random na `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, at `CSRF_TRUSTED_ORIGINS`.
-2. **Palitan o burahin ang demo account** (`osas` / `osas123`). Huwag patakbuhin ang `seed_demo` sa production.
+1. I-set ang environment variables (tingnan ang `.env.example`): `DJANGO_DEBUG=0`, mahabang random na `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, at `CSRF_TRUSTED_ORIGINS`.
+2. **Huwag patakbuhin ang `seed_demo` sa production.** Gumamit ng `ensure_admin` o `createsuperuser`.
 3. Gumamit ng HTTPS. Kailangan din ito ng PWA.
-4. Ang Django ay hindi dapat patakbuhin gamit ang `runserver`. Gumamit ng `gunicorn config.wsgi` (o katumbas) sa likod ng web server tulad ng nginx. Ang web server ang magse-serve ng `/media/`. Huwag i-expose ang `private_media/`.
-5. I-backup ang `db.sqlite3` at ang `private_media/` nang regular. Para sa mas maraming gumagamit, lumipat sa PostgreSQL sa `DATABASES` sa `config/settings.py`.
+4. Patakbuhin gamit ang `gunicorn config.wsgi`, hindi `runserver`. Ang WhiteNoise ang nagse-serve ng static files at ng na-build na React app (`backend/frontend_dist`).
+5. Mag-backup nang regular (database at mga larawan). Walang automatic backup ang libreng plan ng Supabase; tingnan ang `DEPLOY.md`.
+6. Kapag nasa likod ng proxy (Render), i-set ang `DRF_NUM_PROXIES=1` para tamang IP ang binibilang ng throttle.
 
 ## Mga limitasyon na alam na
 - Ang token ng staff ay hindi nag-e-expire hangga't hindi nagsa-sign out.

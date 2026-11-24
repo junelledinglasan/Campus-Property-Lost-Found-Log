@@ -6,6 +6,8 @@ Sistema para sa OSAS: nagpo-post ng found items ang OSAS, at ang mga estudyante 
 lost-found-system/
   frontend/   React (Vite) PWA
   backend/    Django REST API
+  DEPLOY.md   Supabase + Render
+  build.sh, render.yaml
 ```
 
 ## Pinakamabilis na paraan para patakbuhin
@@ -30,5 +32,7 @@ npm run dev
 ```
 
 Buksan ang http://localhost:5173. OSAS staff sign in: `osas` / `osas123`.
+
+SQLite at lokal na folder ang gamit sa laptop, kaya walang ibang kailangan. Para sa online na bersyon (Supabase at Render), tingnan ang **DEPLOY.md**.
 
 Ang detalye ay nasa `backend/README.md` at `frontend/README.md`.

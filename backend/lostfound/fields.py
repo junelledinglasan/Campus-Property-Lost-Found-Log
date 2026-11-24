@@ -1,4 +1,5 @@
 import base64
+import logging
 import binascii
 import mimetypes
 import uuid
@@ -13,6 +14,9 @@ ALLOWED_PREFIXES = {
     'data:image/webp;base64,': 'webp',
 }
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
+
+
+logger = logging.getLogger(__name__)
 
 
 class Base64ImageField(serializers.ImageField):
@@ -66,7 +70,8 @@ class HandoverPhotoField(serializers.Field):
         try:
             with value.open('rb') as handle:
                 raw = handle.read()
-        except (FileNotFoundError, OSError, ValueError):
+        except Exception:  # nawawalang file o hindi maabot ang storage: huwag ibagsak ang buong listahan
+            logger.warning('Hindi mabasa ang handover photo %s', value.name, exc_info=True)
             return None
         mime = mimetypes.guess_type(value.name)[0] or 'image/jpeg'
         return f'data:{mime};base64,{base64.b64encode(raw).decode("ascii")}'

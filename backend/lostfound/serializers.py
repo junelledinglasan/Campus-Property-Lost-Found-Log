@@ -32,12 +32,41 @@ class ItemSerializer(serializers.ModelSerializer):
         error_messages={'blank': 'Enter where the item was found.', 'required': 'Enter where the item was found.'},
     )
     createdAt = serializers.DateTimeField(source='created_at', read_only=True)
+    # Proof na naibalik na ang item: ang handover photo ng inaprubahang claim. Makikita ng lahat,
+    # pero sa detalye lang ng isang item (hindi sa listahan), at walang pangalan o student number.
+    handoverPhoto = serializers.SerializerMethodField()
+    returnedAt = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
-        fields = ['id', 'name', 'category', 'description', 'photo', 'dateFound', 'placeFound', 'status', 'createdAt']
+        fields = ['id', 'name', 'category', 'description', 'photo', 'dateFound', 'placeFound', 'status', 'createdAt',
+                  'handoverPhoto', 'returnedAt']
         # Hindi pwedeng baguhin ang status nang direkta. Nagbabago lang ito sa pamamagitan ng mga claim.
         read_only_fields = ['id', 'status']
+
+    def _approved_claim(self, item):
+        if item.status != Item.Status.CLAIMED:
+            return None
+        return item.claims.filter(status=Claim.Status.APPROVED).order_by('-decided_at', '-id').first()
+
+    def get_handoverPhoto(self, item):  # noqa: N802
+        if not self.context.get('include_proof'):
+            return None
+        claim = self._approved_claim(item)
+        return HandoverPhotoField().to_representation(claim.handover_photo) if claim else None
+
+    def get_returnedAt(self, item):  # noqa: N802
+        if not self.context.get('include_proof'):
+            return None
+        claim = self._approved_claim(item)
+        return claim.decided_at.isoformat() if claim and claim.decided_at else None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context.get('include_proof'):
+            data.pop('handoverPhoto', None)
+            data.pop('returnedAt', None)
+        return data
 
     def validate_dateFound(self, value):  # noqa: N802 (sinusunod ang pangalan ng field)
         if value > timezone.localdate():

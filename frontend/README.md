@@ -31,7 +31,7 @@ VITE_USE_MOCK=true npm run dev
 | Address | Para kanino | Ano ang ginagawa |
 | --- | --- | --- |
 | `/` | Lahat | Listahan ng found items, search, at filter |
-| `/items/:id` | Lahat | Detalye ng item at claim form (full name at student number) |
+| `/items/:id` | Lahat | Detalye ng item at claim form (full name at student number). Kapag naibalik na, ipinapakita ang handover photo bilang proof |
 | `/admin/login` | OSAS | Sign in |
 | `/admin/items` | OSAS | Mag-post, mag-edit, at mag-delete ng found item |
 | `/admin/claims` | OSAS | Mag-check ng claim, i-verify ang ID, mag-upload ng handover photo, i-approve o i-reject |

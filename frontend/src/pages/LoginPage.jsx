@@ -57,6 +57,7 @@ export default function LoginPage() {
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
+          <p className="hint">Prototype account: username osas, password osas123. The Django login replaces this later.</p>
         </form>
       </div>
     </section>

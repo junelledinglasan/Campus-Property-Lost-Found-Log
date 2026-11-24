@@ -70,6 +70,12 @@ class ItemViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return [IsStaff()]
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        # Ang proof photo ay kasama lang sa detalye ng isang item, para hindi bumigat ang listahan.
+        context['include_proof'] = self.action == 'retrieve'
+        return context
+
 
 # ---------- Claims ----------
 
